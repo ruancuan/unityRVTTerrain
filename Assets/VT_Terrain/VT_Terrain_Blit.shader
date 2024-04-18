@@ -1,7 +1,8 @@
 ﻿Shader "VT_Terrain_Blit"
 {
 	Properties
-	{ [HideInInspector] _Control("Control (RGBA)", 2D) = "red" {}
+	{ 
+		[HideInInspector] _Control("Control (RGBA)", 2D) = "red" {}
 		_MainTex("Texture", 2D) = "white" {}
 
 	}
@@ -14,7 +15,7 @@
 		{
 			cull off
 			ztest always
-		zwrite off
+			zwrite off
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
@@ -119,30 +120,30 @@
 			{
 
 				half4 splat_control;
-			half weight;
-			fixed4 mixedDiffuse;
-			fixed3 mixedNormal;
-			fixed4 DiffuseAll = 0;
-			fixed3 NormalAll = 0;
-			SplatmapMix(_Control0,0, IN, splat_control, weight, mixedDiffuse, mixedNormal);
-			DiffuseAll += mixedDiffuse * weight;
-			NormalAll += (mixedNormal * weight);
-			SplatmapMix(_Control1,1, IN, splat_control, weight, mixedDiffuse, mixedNormal);
-			DiffuseAll += mixedDiffuse * weight;
-			NormalAll += (mixedNormal * weight);
+				half weight;
+				fixed4 mixedDiffuse;
+				fixed3 mixedNormal;
+				fixed4 DiffuseAll = 0;
+				fixed3 NormalAll = 0;
+				SplatmapMix(_Control0,0, IN, splat_control, weight, mixedDiffuse, mixedNormal);
+				DiffuseAll += mixedDiffuse * weight;
+				NormalAll += (mixedNormal * weight);
+				SplatmapMix(_Control1,1, IN, splat_control, weight, mixedDiffuse, mixedNormal);
+				DiffuseAll += mixedDiffuse * weight;
+				NormalAll += (mixedNormal * weight);
 
-			SplatmapMix(_Control2,2, IN, splat_control, weight, mixedDiffuse, mixedNormal);
-			DiffuseAll += mixedDiffuse * weight;
-			NormalAll += (mixedNormal * weight);
+				SplatmapMix(_Control2,2, IN, splat_control, weight, mixedDiffuse, mixedNormal);
+				DiffuseAll += mixedDiffuse * weight;
+				NormalAll += (mixedNormal * weight);
 
-			//SplatmapMix(_Control3, 3, IN, splat_control, weight, mixedDiffuse, mixedNormal);
-			//DiffuseAll += mixedDiffuse * weight;
-			//NormalAll += (mixedNormal * weight);
-			PixelOutput po;
-			po.col0 =  DiffuseAll;
-			po.col1 =   half4(NormalAll.xyz * 0.5 + 0.5, 1);
+				//SplatmapMix(_Control3, 3, IN, splat_control, weight, mixedDiffuse, mixedNormal);
+				//DiffuseAll += mixedDiffuse * weight;
+				//NormalAll += (mixedNormal * weight);
+				PixelOutput po;
+    po.col0 = DiffuseAll;
+				po.col1 =   half4(NormalAll.xyz * 0.5 + 0.5, 1);
  
-			return po;
+				return po;
 			}
  
  

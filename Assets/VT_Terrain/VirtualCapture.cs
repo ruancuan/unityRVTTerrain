@@ -131,25 +131,19 @@ public class VirtualCapture : MonoBehaviour {
 
 		for (int index = 0; index < arrayLen; index++)
 		{
-		  
+			if (index >= terrainData.splatPrototypes.Length) break;
+			print(index);
+			for (int k = 0; k < terrainData.splatPrototypes[index].texture.mipmapCount; k++)
+			{
+				Graphics.CopyTexture(terrainData.splatPrototypes[index].texture, 0, k, albedoAtlas, index, k);
 
-				if (index >= terrainData.splatPrototypes.Length) break;
-				print(index);
-				for (int k = 0; k < terrainData.splatPrototypes[index].texture.mipmapCount; k++)
-				{
-					Graphics.CopyTexture(terrainData.splatPrototypes[index].texture, 0, k, albedoAtlas, index, k);
+			}
+			for (int k = 0; k < terrainData.splatPrototypes[index].normalMap.mipmapCount; k++)
+			{
+				Graphics.CopyTexture(terrainData.splatPrototypes[index].normalMap, 0, k, normalAtlas, index, k);
 
-				}
-				for (int k = 0; k < terrainData.splatPrototypes[index].normalMap.mipmapCount; k++)
-				{
-					Graphics.CopyTexture(terrainData.splatPrototypes[index].normalMap, 0, k, normalAtlas, index, k);
-
-				}
-
-			 
+			}
 		}
-
-
 	}
 #endif
 }
