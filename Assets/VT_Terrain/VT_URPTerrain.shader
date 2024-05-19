@@ -35,8 +35,8 @@ Shader "Universal Render Pipeline/Terrain/RVT Lit"
             #pragma vertex SplatmapVert2
             #pragma fragment SplatmapFragment2
 
-            #define _METALLICSPECGLOSSMAP 1
-            #define _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A 1
+            //#define _METALLICSPECGLOSSMAP 1
+            //#define _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A 1
 
             // -------------------------------------
             // Universal Pipeline keywords
@@ -45,7 +45,7 @@ Shader "Universal Render Pipeline/Terrain/RVT Lit"
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
             #pragma multi_compile _ SHADOWS_SHADOWMASK
-            #pragma multi_compile _ _CLUSTERED_RENDERING
+            #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
 
             // -------------------------------------
             // Unity defined keywords

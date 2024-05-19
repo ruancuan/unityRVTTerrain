@@ -119,28 +119,28 @@ public class VirtualCapture : MonoBehaviour {
 	// Update is called once per frame
 	void MakeAlbedoAtlas()
 	{
-		var arrayLen= terrainData.splatPrototypes.Length;
+		var arrayLen= terrainData.terrainLayers.Length;
 	 
-		int wid = terrainData.splatPrototypes[0].texture.width;
-		int hei = terrainData.splatPrototypes[0].texture.height;
+		int wid = terrainData.terrainLayers[0].diffuseTexture.width;
+		int hei = terrainData.terrainLayers[0].diffuseTexture.height;
 
-		int widNormal = terrainData.splatPrototypes[0].normalMap.width;
-		int heiNormal = terrainData.splatPrototypes[0].normalMap.height;
-		albedoAtlas = new Texture2DArray(wid, hei, arrayLen, terrainData.splatPrototypes[0].texture.format, true, false);
-		normalAtlas = new Texture2DArray(widNormal, heiNormal, arrayLen, terrainData.splatPrototypes[0].normalMap.format, true, true);
+		int widNormal = terrainData.terrainLayers[0].normalMapTexture.width;
+		int heiNormal = terrainData.terrainLayers[0].normalMapTexture.height;
+		albedoAtlas = new Texture2DArray(wid, hei, arrayLen, terrainData.terrainLayers[0].diffuseTexture.format, true, false);
+		normalAtlas = new Texture2DArray(widNormal, heiNormal, arrayLen, terrainData.terrainLayers[0].normalMapTexture.format, true, true);
 
 		for (int index = 0; index < arrayLen; index++)
 		{
-			if (index >= terrainData.splatPrototypes.Length) break;
+			if (index >= terrainData.terrainLayers.Length) break;
 			print(index);
-			for (int k = 0; k < terrainData.splatPrototypes[index].texture.mipmapCount; k++)
+			for (int k = 0; k < terrainData.terrainLayers[index].diffuseTexture.mipmapCount; k++)
 			{
-				Graphics.CopyTexture(terrainData.splatPrototypes[index].texture, 0, k, albedoAtlas, index, k);
+				Graphics.CopyTexture(terrainData.terrainLayers[index].diffuseTexture, 0, k, albedoAtlas, index, k);
 
 			}
-			for (int k = 0; k < terrainData.splatPrototypes[index].normalMap.mipmapCount; k++)
+			for (int k = 0; k < terrainData.terrainLayers[index].normalMapTexture.mipmapCount; k++)
 			{
-				Graphics.CopyTexture(terrainData.splatPrototypes[index].normalMap, 0, k, normalAtlas, index, k);
+				Graphics.CopyTexture(terrainData.terrainLayers[index].normalMapTexture, 0, k, normalAtlas, index, k);
 
 			}
 		}

@@ -125,8 +125,6 @@ struct Varyings
     #ifdef _ALPHATEST_ON
         ClipHoles(IN.uvMainAndLM.xy);
     #endif
-
-        half3 normalTS = half3(0.0h, 0.0h, 1.0h);
         
         half weight;
         half4 mixedDiffuse;
@@ -149,12 +147,11 @@ struct Varyings
         
 
         float4 albedo = SAMPLE_TEXTURE2D_X_LOD(_VT_AlbedoTex,sampler_VT_AlbedoTex, float3(localUV, indexData.r), mipmap);
-        float3 normal = SAMPLE_TEXTURE2D_X_LOD(_VT_NormalTex,sampler_VT_NormalTex, float3(localUV, indexData.r), mipmap);
-        normal = normal * 2 - 1;
-        
+        float3 normalTS = SAMPLE_TEXTURE2D_X_LOD(_VT_NormalTex,sampler_VT_NormalTex, float3(localUV, indexData.r), mipmap);
+        //normal = normalize(normal * 2 - 1);
 
         InputData inputData;
-        InitializeInputData2(IN, normal, inputData);
+        InitializeInputData2(IN, normalTS, inputData);
         // inputData.normalWS = normal;
         
         half4 color = UniversalFragmentPBR(inputData, albedo, _Metallic, /* specular */ half3(0.0h, 0.0h, 0.0h), _Smoothness, _Occlusion, /* emission */ half3(0, 0, 0), 1.0);
