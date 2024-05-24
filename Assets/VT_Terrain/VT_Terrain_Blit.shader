@@ -24,21 +24,23 @@
 			#include "UnityCG.cginc"
  
 			sampler2D _Control0;
-		float4 _Control0_ST;
+			float4 _Control0_ST;
 
-		sampler2D _Control1;
-		float4 _Control1_ST;
-		sampler2D _Control2;
-		float4 _Control2_ST;
+			sampler2D _Control1;
+			float4 _Control1_ST;
+			sampler2D _Control2;
+			float4 _Control2_ST;
 
-		sampler2D _Control3;
-		float4 _Control3_ST;
-		float4  blitOffsetScale;
-		float4  tileData[16];
+			sampler2D _Control3;
+			float4 _Control3_ST;
+			float4  blitOffsetScale;
+			float4  tileData[16];
 
 
-		UNITY_DECLARE_TEX2DARRAY(albedoAtlas);
-		UNITY_DECLARE_TEX2DARRAY(normalAtlas);
+			UNITY_DECLARE_TEX2DARRAY(albedoAtlas);
+			UNITY_DECLARE_TEX2DARRAY(normalAtlas);
+			UNITY_DECLARE_TEX2DARRAY(maskAtlas);
+
 			struct appdata
 			{
 				float4 vertex : POSITION;
@@ -49,6 +51,7 @@
 			struct PixelOutput {
 				float4 col0 : COLOR0;
 				float4 col1 : COLOR1;
+				float4 col2:COLOR2;
 			};
 
 			struct v2f
@@ -58,7 +61,7 @@
 				float4 vertex : SV_POSITION;
 			};
 
-			void SplatmapMix(sampler2D _Control, int passIndex, v2f IN, out half4 splat_control, out half weight, out fixed4 mixedDiffuse, out fixed3 mixedNormal)
+			void SplatmapMix(sampler2D _Control, int passIndex, v2f IN, out half4 splat_control, out half weight, out fixed4 mixedDiffuse, out fixed3 mixedNormal,out fixed4 mixedMask)
 
 			{
 				splat_control = tex2D(_Control, IN.tc_Control0);
@@ -75,12 +78,20 @@
 
 				mixedDiffuse = 0.0f;
 				mixedNormal = 0.0f;
+				mixedMask=0.0f;
 // #ifdef _BLIT_ALBEDO
 
 				mixedDiffuse += splat_control.r * UNITY_SAMPLE_TEX2DARRAY(albedoAtlas, float3(IN.tc_Control0 * tileData[passIndex * 4].xy, passIndex * 4));
 				mixedDiffuse += splat_control.g * UNITY_SAMPLE_TEX2DARRAY(albedoAtlas, float3(IN.tc_Control0 * tileData[passIndex * 4 + 1].xy, passIndex * 4 + 1));
 				mixedDiffuse += splat_control.b * UNITY_SAMPLE_TEX2DARRAY(albedoAtlas, float3(IN.tc_Control0 * tileData[passIndex * 4 + 2].xy, passIndex * 4 + 2));
 				mixedDiffuse += splat_control.a * UNITY_SAMPLE_TEX2DARRAY(albedoAtlas, float3(IN.tc_Control0 * tileData[passIndex * 4 + 3].xy, passIndex * 4 + 3));
+
+				
+				mixedMask += splat_control.r * UNITY_SAMPLE_TEX2DARRAY(maskAtlas, float3(IN.tc_Control0 * tileData[passIndex * 4].xy, passIndex * 4));
+				mixedMask += splat_control.g * UNITY_SAMPLE_TEX2DARRAY(maskAtlas, float3(IN.tc_Control0 * tileData[passIndex * 4 + 1].xy, passIndex * 4 + 1));
+				mixedMask += splat_control.b * UNITY_SAMPLE_TEX2DARRAY(maskAtlas, float3(IN.tc_Control0 * tileData[passIndex * 4 + 2].xy, passIndex * 4 + 2));
+				mixedMask += splat_control.a * UNITY_SAMPLE_TEX2DARRAY(maskAtlas, float3(IN.tc_Control0 * tileData[passIndex * 4 + 3].xy, passIndex * 4 + 3));
+
 
  //#else
 
@@ -123,31 +134,42 @@
 				half weight;
 				fixed4 mixedDiffuse;
 				fixed3 mixedNormal;
+				fixed4 mixedMask;
 				fixed4 DiffuseAll = 0;
 				fixed3 NormalAll = 0;
-				SplatmapMix(_Control0,0, IN, splat_control, weight, mixedDiffuse, mixedNormal);
-				DiffuseAll += mixedDiffuse * weight;
-				NormalAll += (mixedNormal * weight);
-				SplatmapMix(_Control1,1, IN, splat_control, weight, mixedDiffuse, mixedNormal);
-				DiffuseAll += mixedDiffuse * weight;
-				NormalAll += (mixedNormal * weight);
+				fixed4 MaskAll=0;
 
-				SplatmapMix(_Control2,2, IN, splat_control, weight, mixedDiffuse, mixedNormal);
+				SplatmapMix(_Control0,0, IN, splat_control, weight, mixedDiffuse, mixedNormal,mixedMask);
 				DiffuseAll += mixedDiffuse * weight;
 				NormalAll += (mixedNormal * weight);
+				MaskAll+=mixedMask*weight;
 
-				//SplatmapMix(_Control3, 3, IN, splat_control, weight, mixedDiffuse, mixedNormal);
+				SplatmapMix(_Control1,1, IN, splat_control, weight, mixedDiffuse, mixedNormal,mixedMask);
+				DiffuseAll += mixedDiffuse * weight;
+				NormalAll += (mixedNormal * weight);
+				MaskAll+=mixedMask*weight;
+
+				SplatmapMix(_Control2,2, IN, splat_control, weight, mixedDiffuse, mixedNormal,mixedMask);
+				DiffuseAll += mixedDiffuse * weight;
+				NormalAll += (mixedNormal * weight);
+				MaskAll+=mixedMask*weight;
+
+				//SplatmapMix(_Control3, 3, IN, splat_control, weight, mixedDiffuse, mixedNormal,mixedMask);
 				//DiffuseAll += mixedDiffuse * weight;
 				//NormalAll += (mixedNormal * weight);
+				//MaskAll+=mixedMask*weight;
+
 				PixelOutput po;
-    po.col0 = DiffuseAll;
+
+				po.col0 = DiffuseAll;
 				po.col1 =   half4(NormalAll.xyz * 0.5 + 0.5, 1);
+				po.col2=MaskAll;
  
 				return po;
 			}
  
  
-				ENDCG
-			}
+			ENDCG
+		}
 	}
 }

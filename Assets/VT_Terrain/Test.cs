@@ -39,11 +39,6 @@ public class Test : MonoBehaviour {
 			 
 		
 		}
-		if (moving == false) return;
-		var pos = transform.position;
-		pos.z = startZ + Mathf.PingPong(endZ - startZ + (Time.time - startTime) * speed, endZ - startZ);
-		pos.y = terrain.SampleHeight(pos) + hight;
-		transform.position = Vector3.Lerp(transform.position, pos, lerp);
 	}
 
  

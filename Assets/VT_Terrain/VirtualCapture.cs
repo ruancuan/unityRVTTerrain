@@ -9,15 +9,20 @@ public class VirtualCapture : MonoBehaviour {
 
 	public Texture2DArray albedoAtlas;
 	public Texture2DArray normalAtlas;
+	public Texture2DArray maskAtlas;
+
 	public RenderTexture[] clipRTs;
 	private RenderBuffer[] mrtRB = new RenderBuffer[2];
 	public int mipmapCount;
 	public const int virtualTextArraySize = 512;
+
+	public Texture2D defaultMask;
+
 	// Use this for initialization
 	void Awake () {
 		
 		mipmapCount = (int)Mathf.Log(virtualTextArraySize, 2);
-		clipRTs = new RenderTexture[2];// 
+		clipRTs = new RenderTexture[3];// 
 		for (int i = 0; i < clipRTs.Length; i++)
 		{
 
@@ -55,11 +60,12 @@ public class VirtualCapture : MonoBehaviour {
  
 		Shader.SetGlobalTexture("albedoAtlas", albedoAtlas);
 		Shader.SetGlobalTexture("normalAtlas", normalAtlas);
-		Shader.SetGlobalVectorArray("tileData", tileData);
+        Shader.SetGlobalTexture("maskAtlas", maskAtlas);
+        Shader.SetGlobalVectorArray("tileData", tileData);
 		Shader.SetGlobalInt("virtualTextArraySize", virtualTextArraySize);
 
 		//mrt mode
-		mrtRB = new RenderBuffer[] { clipRTs[0].colorBuffer, clipRTs[1].colorBuffer };
+		mrtRB = new RenderBuffer[] { clipRTs[0].colorBuffer, clipRTs[1].colorBuffer, clipRTs[2].colorBuffer };
 		 
 
 	}
@@ -79,7 +85,7 @@ public class VirtualCapture : MonoBehaviour {
 	}
  
  
-	public void  virtualCapture_MRT(Vector2 center, float size, out RenderTexture albedoRT,out RenderTexture normalRT)
+	public void  virtualCapture_MRT(Vector2 center, float size, out RenderTexture albedoRT,out RenderTexture normalRT,out RenderTexture maskRT)
 	{
 
 		int terrainSize = (int)terrainData.size.x;
@@ -110,8 +116,10 @@ public class VirtualCapture : MonoBehaviour {
 		RenderTexture.active = oldRT;
 		albedoRT = clipRTs[0];
 		normalRT = clipRTs[1];
+		maskRT = clipRTs[2];
 		albedoRT.GenerateMips();
 		normalRT.GenerateMips();
+		maskRT.GenerateMips();
 	}
 
 #if UNITY_EDITOR
@@ -126,8 +134,13 @@ public class VirtualCapture : MonoBehaviour {
 
 		int widNormal = terrainData.terrainLayers[0].normalMapTexture.width;
 		int heiNormal = terrainData.terrainLayers[0].normalMapTexture.height;
+
+		int widMask = terrainData.terrainLayers[0].diffuseTexture.width;
+		int heiMask = terrainData.terrainLayers[0].diffuseTexture.height;
+
 		albedoAtlas = new Texture2DArray(wid, hei, arrayLen, terrainData.terrainLayers[0].diffuseTexture.format, true, false);
 		normalAtlas = new Texture2DArray(widNormal, heiNormal, arrayLen, terrainData.terrainLayers[0].normalMapTexture.format, true, true);
+		maskAtlas = new Texture2DArray(widMask, heiMask, arrayLen, terrainData.terrainLayers[0].diffuseTexture.format, true, false);
 
 		for (int index = 0; index < arrayLen; index++)
 		{
@@ -143,6 +156,20 @@ public class VirtualCapture : MonoBehaviour {
 				Graphics.CopyTexture(terrainData.terrainLayers[index].normalMapTexture, 0, k, normalAtlas, index, k);
 
 			}
+			if (terrainData.terrainLayers[index].maskMapTexture)
+			{
+				for (int k = 0; k < terrainData.terrainLayers[index].maskMapTexture.mipmapCount; k++)
+				{
+					Graphics.CopyTexture(terrainData.terrainLayers[index].maskMapTexture, 0, k, maskAtlas, index, k);
+				}
+			}
+			else
+            {
+                for (int k = 0; k < terrainData.terrainLayers[index].normalMapTexture.mipmapCount; k++)
+                {
+                    Graphics.CopyTexture(defaultMask, 0, k, maskAtlas, index, k);
+                }
+            }
 		}
 	}
 #endif

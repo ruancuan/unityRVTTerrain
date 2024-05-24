@@ -2,9 +2,7 @@
 #define UNIVERSAL_TERRAIN_LIT_URPRVT
 
 CBUFFER_START(_Terrain)
-    float _Metallic;
-    float _Smoothness;
-    float _Occlusion;
+
 CBUFFER_END
 
 
@@ -30,6 +28,8 @@ struct Varyings
     float2 dynamicLightmapUV        : TEXCOORD9;
 #endif
 
+    float2  normalizedScreenSpaceUV:TEXCOORD10;
+    half4   shadowMask:TEXCOORD11;
     float4 clipPos                  : SV_POSITION;
     UNITY_VERTEX_OUTPUT_STEREO
 };
@@ -40,7 +40,10 @@ struct Varyings
     SAMPLER(sampler_VT_AlbedoTex);
 
     TEXTURE2D_ARRAY(_VT_NormalTex);
-    SAMPLER(sampler_VT_NormalTex);  
+    SAMPLER(sampler_VT_NormalTex);
+
+    TEXTURE2D_ARRAY(_VT_MaskTex);
+    SAMPLER(sampler_VT_MaskTex);
 
 
     
@@ -77,6 +80,7 @@ struct Varyings
         fogFactor = ComputeFogFactor(Attributes.positionCS.z);
     #endif
         o.fogFactor = fogFactor;
+        
 
         return o;
     }
@@ -96,14 +100,19 @@ struct Varyings
         inputData.normalWS = IN.normal;
 
         inputData.shadowCoord = TransformWorldToShadowCoord(inputData.positionWS);
+        inputData.normalWS = normalize(TransformTangentToWorld(normalTS,inputData.tangentToWorld));
+
     #if defined(DYNAMICLIGHTMAP_ON)
         inputData.bakedGI = SAMPLE_GI(IN.uvMainAndLM.zw, IN.dynamicLightmapUV, SH, inputData.normalWS);
     #else
         inputData.bakedGI = SAMPLE_GI(IN.uvMainAndLM.zw, SH, inputData.normalWS);
     #endif
-        inputData.normalWS = TransformTangentToWorld(normalTS,inputData.tangentToWorld);
+
         inputData.viewDirectionWS = viewDirWS;
         inputData.fogCoord = InitializeInputDataFog(float4(IN.positionWS, 1.0), IN.fogFactor);
+        
+        inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(IN.clipPos);
+        inputData.shadowMask = SAMPLE_SHADOWMASK(IN.uvMainAndLM.zw)
         
     }
 
@@ -126,10 +135,6 @@ struct Varyings
         ClipHoles(IN.uvMainAndLM.xy);
     #endif
         
-        half weight;
-        half4 mixedDiffuse;
-        float2 splatUV = (IN.uvMainAndLM.xy * (_Control_TexelSize.zw - 1.0f) + 0.5f) * _Control_TexelSize.xy;
-        half4 splatControl = SAMPLE_TEXTURE2D(_Control, sampler_Control, splatUV);
 
         float4 indexData = tex2D(_VT_IndexTex,  (IN.uvMainAndLM.xy));
         float2 wpos = IN.uvMainAndLM.xy * VT_RootSize;
@@ -147,19 +152,25 @@ struct Varyings
         
 
         float4 albedo = SAMPLE_TEXTURE2D_X_LOD(_VT_AlbedoTex,sampler_VT_AlbedoTex, float3(localUV, indexData.r), mipmap);
-        float3 normalTS = SAMPLE_TEXTURE2D_X_LOD(_VT_NormalTex,sampler_VT_NormalTex, float3(localUV, indexData.r), mipmap);
-        //normal = normalize(normal * 2 - 1);
+        float3 normalTS = UnpackNormal(SAMPLE_TEXTURE2D_X_LOD(_VT_NormalTex,sampler_VT_NormalTex, float3(localUV, indexData.r), mipmap));
+        float4 mask=SAMPLE_TEXTURE2D_X_LOD(_VT_MaskTex,sampler_VT_MaskTex,float3(localUV,indexData.r),mipmap);
+
 
         InputData inputData;
         InitializeInputData2(IN, normalTS, inputData);
         // inputData.normalWS = normal;
+
+        float metallic=mask.r;
+        float smoothness=mask.a;
+        float occlusion=mask.g;
         
-        half4 color = UniversalFragmentPBR(inputData, albedo, _Metallic, /* specular */ half3(0.0h, 0.0h, 0.0h), _Smoothness, _Occlusion, /* emission */ half3(0, 0, 0), 1.0);
+        //return half4(inputData.bakedGI.xyz,1.0);
+        half4 color = UniversalFragmentPBR(inputData, albedo, metallic, /* specular */ half3(0.0h, 0.0h, 0.0h), smoothness, occlusion, /* emission */ half3(0, 0, 0), 1.0);
 
-        SplatmapFinalColor(color, inputData.fogCoord);
+        //SplatmapFinalColor(color, inputData.fogCoord);
 
-        // return half4(inputData.normalWS.xyz,1.0);
-        // return half4(normal.rgb, 1.0h);
+
+        //return half4(color.xyz-albedo.xyz+inputData.bakedGI*albedo.xyz, 1.0h);
         return float4(color.xyz, 1.0);
     }
 

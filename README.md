@@ -6,5 +6,5 @@ a runtime virtural texture terrain for unity 5.6
 ![image](https://user-images.githubusercontent.com/1196715/184493900-e7ee2251-7a67-42a5-927d-6b3a4c4f54ca.png)
 
 添加了URP版本
-![image](微信截图_20240418214924.png)
-![image](微信截图_20240418214917.png)
+![image](截屏2024-05-23 15.50.59.png)
+![image](截屏2024-05-23 15.51.03.png)

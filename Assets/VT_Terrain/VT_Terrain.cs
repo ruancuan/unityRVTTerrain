@@ -255,6 +255,7 @@ public class VT_Terrain : MonoBehaviour
     Node root;
     RenderTexture clipRTAlbedoArray;
     RenderTexture clipRTNormalArray;
+    RenderTexture clipRTMaskArray;
     public int rootSize = 1024;
     public Vector3 terrainOffset ;
     public ComputeShader indexGenerator;
@@ -299,14 +300,15 @@ public class VT_Terrain : MonoBehaviour
         clipRTNormalArray.Create();
 
 
+        clipRTMaskArray = new RenderTexture(VirtualCapture.virtualTextArraySize, VirtualCapture.virtualTextArraySize, 0, RenderTextureFormat.ARGB32,RenderTextureReadWrite.Linear);
+        clipRTMaskArray.volumeDepth = clipRTAlbedoArray.volumeDepth;
+        clipRTMaskArray.wrapMode = TextureWrapMode.Clamp;
+        clipRTMaskArray.dimension = UnityEngine.Rendering.TextureDimension.Tex2DArray;
+        clipRTMaskArray.useMipMap = true;
+        clipRTMaskArray.autoGenerateMips = false;
+        clipRTMaskArray.Create();
 
-
-     
-
-      
-     
-
-         root =   Node.createRoot(rootSize, clipRTAlbedoArray.volumeDepth, onLoadNodeData);
+        root =   Node.createRoot(rootSize, clipRTAlbedoArray.volumeDepth, onLoadNodeData);
         Shader.SetGlobalInt("VT_RootSize", rootSize);
         //  root =   Node.createRoot(16,100, onLoadNodeData);
        
@@ -320,6 +322,7 @@ public class VT_Terrain : MonoBehaviour
         if (indexRT != null) indexRT.Release();
         if (clipRTAlbedoArray != null) clipRTAlbedoArray.Release();
         if (clipRTNormalArray != null) clipRTNormalArray.Release();
+        if (clipRTMaskArray != null) clipRTMaskArray.Release();
 
     }
 
@@ -358,6 +361,7 @@ public class VT_Terrain : MonoBehaviour
       
         Shader.SetGlobalTexture("_VT_AlbedoTex", clipRTAlbedoArray);
         Shader.SetGlobalTexture("_VT_NormalTex", clipRTNormalArray);
+        Shader.SetGlobalTexture("_VT_MaskTex", clipRTMaskArray);
         Shader.SetGlobalTexture("_VT_IndexTex", indexRT);
 
  
@@ -374,13 +378,14 @@ public class VT_Terrain : MonoBehaviour
         
         Profiler.BeginSample("onLoadNodeData");
      
-        RenderTexture albedoRT, normalRT;
+        RenderTexture albedoRT, normalRT,maskRT;
 
-        virtualCapture.virtualCapture_MRT(new Vector2(item.x + item.size / 2.0f, item.z + item.size / 2.0f), item.size, out albedoRT, out normalRT);
+        virtualCapture.virtualCapture_MRT(new Vector2(item.x + item.size / 2.0f, item.z + item.size / 2.0f), item.size, out albedoRT, out normalRT,out maskRT);
         for (int i = 0; i < 4; i++)
         {
             Graphics.CopyTexture(albedoRT, 0, i, clipRTAlbedoArray, item.physicTexIndex, i);
             Graphics.CopyTexture(normalRT, 0, i, clipRTNormalArray, item.physicTexIndex, i);
+            Graphics.CopyTexture(maskRT, 0, i, clipRTMaskArray, item.physicTexIndex, i);
         }
 
         indexGenerator.SetVector("value", new Vector4(item.physicTexIndex, item.x, item.z, item.size));

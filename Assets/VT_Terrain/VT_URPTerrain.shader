@@ -3,9 +3,7 @@ Shader "Universal Render Pipeline/Terrain/RVT Lit"
     Properties
     {
         [HideInInspector] _Control("Control (RGBA)", 2D) = "red" {}
-        _Metallic("Metallic", Range(0.0, 1.0)) = 0.0
-        _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.5
-        _Occlusion("Occlusion",Range(0.0,1.0))=1.0
+
     }
 
     HLSLINCLUDE
